@@ -7,48 +7,38 @@
 #include "nrf24l01.h"
 #include "adc.h"
 #include "motor.h"
-#include "system.hpp"
-
+#include "os.hpp"
+#include "CMD_Desk.h"
 
 System QUADROTOR;
+CMD    COMMAND;
+
+extern "C"{
+    void vApplicationStackOverflowHook( TaskHandle_t xTask,
+                                        signed char *pcTaskName ){
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+        PRINTF("Stack overflow at ""%s""\n",(const char*)pcTaskName);
+#endif
+    }
+}
 
 int main(void){
     
     //freeRTOS Page: 153
+    //QUADROTOR.initRadioFlag      = false;
+    //QUADROTOR.initGryoSensorFlag = false;
+    System::initCameraFlag     = false;
+    //QUADROTOR.initMotorFlag      = false;
+    System::init();
+    System::OS.assignTask(Task_1,System::showLEDStatus     ,"LED Task"     ,2);
+    System::OS.assignTask(Task_2,System::updateGyroData    ,"Gyroscope"    ,3);
+    System::OS.assignTask(Task_3,System::readRadioData     ,"Radio Connect",3);
+    System::OS.assignTask(Task_5,System::updateMotorSpeed  ,"Motor Task"   ,3);
+    System::OS.assignTask(Task_6,System::pidControl        ,"PID Ctrl"     ,3);
     
-    
+    System::OS.start();
+    while(1);
 
-    GT911       screen(true);
-    QUADROTOR.sensor.init(LPI2C4);
-    QUADROTOR.radio.init(LPSPI4,PCS0,GPIO2,24U,GPIO2,25U,GPIO2,20U);
-    LED::RGB_Init();
-    LED::RGB_Set(0x04);
-    DELAY::ms(100);
-    if(QUADROTOR.radio.check() == kStatus_Success)
-        LED::RGB_Set(0x02);
-    QUADROTOR.radio.rxMode();
-    
-    screen.printf("APP Start\n");
-
-    QUADROTOR.motor.init(30,70,0,4096);
-    DELAY::ms(10);
-
-    while(1){
-        if(ADC_ConversionDoneFlag == true){
-            ADC_ConversionDoneFlag = false;
-            screen.printf("value = %d\n",ADC_ConvertedValue);
-            QUADROTOR.motor.speed[0]=QUADROTOR.motor.speed[1]=QUADROTOR.motor.speed[2]=QUADROTOR.motor.speed[3]=ADC_ConvertedValue;
-            QUADROTOR.motor.updateSpeed();
-            //pwm.duty(ADC_ConvertedValue,0,4096);
-            //motor.speed(1,ADC_ConvertedValue,0,4096);
-            //motor.speed(2,ADC_ConvertedValue,0,4096);
-            //motor.speed(3,ADC_ConvertedValue,0,4096);
-            //motor.speed(4,ADC_ConvertedValue,0,4096);
-            
-        }
-        
-
-    }
 
 }
 

@@ -7,8 +7,9 @@
 #include "pin_mux.h"
 #include "clock_config.h"
 #include "camera.h"
-#include "lcd.h"
 #include "core_cm7.h"
+#include "system.hpp"
 
 extern uint32_t SystemCoreClock;
+
 #endif
