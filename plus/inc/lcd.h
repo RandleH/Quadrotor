@@ -191,11 +191,7 @@ public:
 private:
 	elcdif_rgb_mode_config_t lcd_cfg;
 	static void setClock(void){
-		clock_video_pll_config_t config = {
-            .loopDivider = 36, 
-            .postDivider = 8 , 
-            .numerator   = 0 , 
-            .denominator = 0 ,};
+		clock_video_pll_config_t config = {.loopDivider = 36,.postDivider = 8 ,.numerator   = 0 ,.denominator = 0 ,};
         CLOCK_InitVideoPll(&config);
         CLOCK_SetMux(kCLOCK_LcdifPreMux, 2);
         CLOCK_SetDiv(kCLOCK_LcdifPreDiv, 1);

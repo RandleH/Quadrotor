@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 #include "fsl_lpuart.h"
-
+#include "uart.h"
 
 #define _JY901_DEMO_ENABLE
 
@@ -94,20 +94,26 @@
 #define DIO_MODE_DOPWM 		4
 #define DIO_MODE_GPS 		5		
 
-typedef struct{
+struct EulerAngle_t{
 	float pitch;
 	float roll;
 	float yaw;
-}EulerAngle_t;
+	short pitch_s;
+	short roll_s;
+	short yaw_s;
+};
 
 typedef struct{
 	float Ax;
 	float Ay;
 	float Az;
+}Acceleration_t;
+
+struct AngularSpeed_t{
 	float Wx;
 	float Wy;
 	float Wz;
-}Acceleration_t;
+};
 
 typedef struct{
 	short Bx;
@@ -115,19 +121,30 @@ typedef struct{
 	short Bz;
 }MagneticField_t;
 
-class JY901:public I2C{
+class MotionData{
+public:
+	MotionData(void){}
+	struct EulerAngle_t 		angle;
+	struct AngularSpeed_t		speed;
+	Acceleration_t      acceler;
+	MagneticField_t     magnet;
+};
+
+class JY901:public I2C,public MotionData{
 public:
 	JY901(void){}
-	JY901(LPI2C_Type* LPI2Cx,LPUART_Type* LPUARTx = NULL):I2C(LPI2Cx,JY901_DEFAULT_ADDRESS,__100KHz__){}
-	status_t init(LPI2C_Type* LPI2Cx,LPUART_Type* LPUARTx = NULL);
+	//JY901(LPI2C_Type* LPI2Cx,LPUART_Type* LPUARTx = NULL):I2C(LPI2Cx,JY901_DEFAULT_ADDRESS,__100KHz__){}
+	status_t init(LPI2C_Type* LPI2Cx);
+	status_t init(LPUART_Type* LPUARTx);
 #ifdef _JY901_DEMO_ENABLE
 	static void DEMO(void);
 #endif
 	status_t updateData(void);
-	EulerAngle_t 		angle;
-	Acceleration_t      acc;
-	MagneticField_t     magnet;
+	//EulerAngle_t 		angle;
+	//Acceleration_t      acceler;
+	//MagneticField_t     magnet;
 private:
+	bool   USE_I2C_Interface;
 	
 };
 

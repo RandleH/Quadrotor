@@ -20,16 +20,28 @@
 #define CORE_BOARD_LED_IOMUXC           IOMUXC_GPIO_AD_B0_09_GPIO1_IO09
 
 #define RGB_RED_LED_GPIO                GPIO1
-#define RGB_RED_LED_GPIO_PIN            (24U)
-#define RGB_RED_LED_IOMUXC              IOMUXC_GPIO_AD_B1_08_GPIO1_IO24
+#define RGB_RED_LED_GPIO_PIN            (14U)//(24U)
+#define RGB_RED_LED_IOMUXC              IOMUXC_GPIO_AD_B0_14_GPIO1_IO14//IOMUXC_GPIO_AD_B1_08_GPIO1_IO24
 
 #define RGB_GREEN_LED_GPIO              GPIO1
-#define RGB_GREEN_LED_GPIO_PIN          (25U)
-#define RGB_GREEN_LED_IOMUXC            IOMUXC_GPIO_AD_B1_09_GPIO1_IO25
+#define RGB_GREEN_LED_GPIO_PIN          (15U)//(25U)
+#define RGB_GREEN_LED_IOMUXC            IOMUXC_GPIO_AD_B0_15_GPIO1_IO15//IOMUXC_GPIO_AD_B1_09_GPIO1_IO25
 
 #define RGB_BLUE_LED_GPIO               GPIO1
 #define RGB_BLUE_LED_GPIO_PIN           (10U)
 #define RGB_BLUE_LED_IOMUXC             IOMUXC_GPIO_AD_B0_10_GPIO1_IO10
+
+#define LED_RGB(r,g,b)					(uint8_t)((r<<2)|(g<<1)|(b<<0))
+#define LED_BLACK						LED_RGB(0,0,0)
+#define LED_OFF							LED_BLACK
+#define LED_RED							LED_RGB(1,0,0)
+#define LED_GREEN						LED_RGB(0,1,0)			
+#define LED_BLUE						LED_RGB(0,0,1)
+#define LED_CYAN						LED_RGB(0,1,1)
+#define LED_MAGENTA						LED_RGB(1,0,1)
+#define LED_YELLOW						LED_RGB(1,1,0)
+#define LED_WHITE						LED_RGB(1,1,1)
+
 
 class LED{
 public:

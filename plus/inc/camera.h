@@ -25,23 +25,23 @@ extern void CSI_DriverIRQHandler(void);
 #endif
 class CAMERA{
 public:
+	CAMERA(void){}
 	CAMERA(LPI2C_Type* LPI2Cx){
 		CAMERA::IOMUXC_MUX_Config();
 		CAMERA::IOMUXC_PAD_Config();
 		CAMERA::RESOURCE_Config(LPI2Cx);
 		this->LPI2Cx = LPI2Cx;
 	}
-	static void IOMUXC_PAD_Config(void){    
-
+protected:
+	void IOMUXC_PAD_Config(void){    
 		IOMUXC_SetPinConfig(
 		  IOMUXC_GPIO_AD_B1_00_LPI2C1_SCL,        /* GPIO_AD_B1_00 PAD functional properties : */
 		  0xD8B0u);                              
 		IOMUXC_SetPinConfig(
 		  IOMUXC_GPIO_AD_B1_01_LPI2C1_SDA,        /* GPIO_AD_B1_01 PAD functional properties : */
 		  0xD8B0u);                                                       
-
 	}
-	static void IOMUXC_MUX_Config(void){
+	void IOMUXC_MUX_Config(void){
 		CLOCK_EnableClock(kCLOCK_Iomuxc);          /* iomuxc clock (iomuxc_clk_enable): 0x03u */
 		IOMUXC_SetPinMux(
 		  IOMUXC_GPIO_AD_B0_00_GPIO1_IO00,        /* CSI_PWR GPIO_AD_B0_04 is configured as GPIO1_IO04 */
@@ -92,7 +92,7 @@ public:
 		  IOMUXC_GPIO_AD_B1_15_CSI_DATA02,        /* GPIO_AD_B1_15 is configured as CSI_DATA02 */
 		  0U);                                    /* Software Input On Field: Input Path is determined by functionality */
 	}
-	static void RESOURCE_Config(LPI2C_Type* LPI2Cx){
+	void RESOURCE_Config(LPI2C_Type* LPI2Cx){
 		lpi2c_master_config_t masterConfig;
 		uint32_t sourceClock;
 		LPI2C_MasterGetDefaultConfig(&masterConfig);
@@ -125,7 +125,8 @@ protected:
 #include "ov5640.h"
 class OV5640:public CAMERA{
 public:
-	OV5640();
+	OV5640(){};
+	status_t init(LPI2C_Type* LPI2Cx);
 	void     reset(bool pullUp);
 	void     pwr(bool pullUp);
 	void     setImgSize(uint16_t x_st,uint16_t y_st,uint16_t width,uint16_t height);
@@ -143,7 +144,8 @@ private:
     OV5640_Param    param;
     //OV5640_Resource resource;
 
-    status_t init(void);
+  
+    void     hw_init(void);
     status_t initExt(camera_device_handle_t *handle, const camera_config_t *config, const void *specialConfig);
     status_t initAutoFocus(void);
     status_t start(camera_device_handle_t *handle);

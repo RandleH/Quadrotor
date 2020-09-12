@@ -5,8 +5,8 @@
 #include "fsl_iomuxc.h"
 #include "pad_config.h"
 
-#define USE_LPI2C1_GROUP2
-#define USE_LPI2C2_GROUP2
+#define USE_LPI2C1_GROUP1
+#define USE_LPI2C2_GROUP1
 #define USE_LPI2C3_GROUP2 
 
 #if (!defined ( LPI2C1_SCL ))||(!defined( LPI2C1_SDA ))
@@ -84,18 +84,13 @@
 class I2C{
 public:
 	I2C(void){}
-	I2C(LPI2C_Type* LPI2Cx , uint8_t hw_Addr ,uint32_t baudRate_Hz){
-		this->LPI2Cx      = LPI2Cx;
-		this->hw_Addr     = hw_Addr;
-		this->baudRate_Hz = baudRate_Hz;
-		this->IOMUXC_MUX_PAD_RESOURCE_Config(NULL);
-	}
+	
 	I2C(LPI2C_Type* LPI2Cx , uint8_t hw_Addr ,lpi2c_master_config_t* p){
 		this->LPI2Cx  = LPI2Cx;
 		this->hw_Addr = hw_Addr;
 		this->IOMUXC_MUX_PAD_RESOURCE_Config(p);
 	}
-
+	void init(LPI2C_Type* LPI2Cx, uint8_t hw_Addr ,uint32_t baudRate_Hz);
 protected:
 	LPI2C_Type* LPI2Cx;
 	uint8_t     hw_Addr;

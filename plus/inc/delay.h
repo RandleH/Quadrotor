@@ -16,7 +16,8 @@
 
 extern uint32_t SystemCoreClock;
 
-
+extern void (*API_DELAY_ms_Handle)(uint32_t);
+extern void (*API_DELAY_us_Handle)(uint32_t);
 
 class DELAY{
 public:

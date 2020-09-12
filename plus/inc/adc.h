@@ -43,12 +43,12 @@ typedef uint8_t ADC_Channel_t;
 #define ADC1_IN15 	ADC1,(ADC_Channel_t)15U
 
 #define CORE_BOARD_ADC_GPIO 		GPIO1
-#define CORE_BOARD_ADC_GPIO_PIN		(22U)
-#define CORE_BOARD_ADC_IOMUXC       IOMUXC_GPIO_AD_B1_06_GPIO1_IO22
+#define CORE_BOARD_ADC_GPIO_PIN		(19U)//(22U)
+#define CORE_BOARD_ADC_IOMUXC       IOMUXC_GPIO_AD_B1_03_GPIO1_IO19//IOMUXC_GPIO_AD_B1_06_GPIO1_IO22
 
-#define ADCx              ADC1
+#define ADCx              			ADC1
 #define DEMO_ADC_CHANNEL_GROUP 		0U //ADC 通道组，最多只能使用8个通道组（0到7）
-#define DEMO_ADC_USER_CHANNEL 		11U  //ADC 通道宏定义
+#define DEMO_ADC_USER_CHANNEL 		8U  //ADC 通道宏定义
 
 void BOARD_InitADC(void);
 

@@ -177,101 +177,16 @@ typedef enum{
 class PWM{
 friend class PWM_MOTOR;
 public:
-	//PWM(PWM_Type * PWMx,pwm_submodule_t submodule,pwm_channels_t channel,uint32_t freq_Hz,\
-		uint8_t duty           = 0,\
-		PWM_PAIR_t pair        = __PWM_INDEPENDENT__,\
-		uint8_t    deadTimeVal = 0){
-
-
-		
-	//}
-
-	PWM(PWM_Type * PWMx,pwm_submodule_t submodule,pwm_channels_t channel,pwm_config_t* cfg):PWMx(PWM1),freq_Hz(1000){
-		this->PWMx       = PWMx;
-		this->freq_Hz    = freq_Hz;
-		this->pwm_module = submodule;
-		this->pwm_pair   = (PWM_PAIR_t)(cfg->pairOperation%2);
-		this->pwm_channel= channel;
-		this->IOMUXC_MUX_PAD_RESOURCE_Config();
-		this->setDutyRange(0,100);
-	}
-	PWM(void){}
-
-
-	void init(PWM_Type * PWMx,pwm_submodule_t submodule,pwm_channels_t channel,uint32_t freq_Hz,\
-		uint8_t duty           = 0,\
-		PWM_PAIR_t pair        = __PWM_INDEPENDENT__,\
-		uint8_t    deadTimeVal = 0){
-
-
-		this->PWMx = PWM1;
-		this->freq_Hz = 1000;
-		this->min_duty = 0;
-		this->max_duty = 100;
-
-		uint8_t  NumOfChannel    = 1;
-		uint32_t srcClockFreq_Hz = CLOCK_GetFreq(kCLOCK_IpgClk);
-		uint8_t  Div     = 0;
-
-		this->PWMx        = PWMx;
-		this->pwm_module  = submodule;
-		this->pwm_channel = channel;
-		this->pwm_mode    = kPWM_SignedEdgeAligned;
-		this->pwm_pair    = pair;
-		this->freq_Hz     = freq_Hz;
-		this->IOMUXC_MUX_PAD_RESOURCE_Config();
-
-		CLOCK_SetDiv(kCLOCK_IpgDiv,0x03);
-
-		PWM_GetDefaultConfig(&this->pwm_cfg);
-		this->pwm_cfg.clockSource     = kPWM_BusClock;//132MHz
-
-		Div = 0;
-		while(Div<8){
-			if(
-				this->freq_Hz < (uint32_t)(srcClockFreq_Hz>>Div)
-			  &&this->freq_Hz > (uint32_t)(srcClockFreq_Hz>>(Div+16)))
-				break;
-			Div++;
-		}
-		switch(Div){ 
-			case 0:this->pwm_cfg.prescale = kPWM_Prescale_Divide_1;  break;
-			case 1:this->pwm_cfg.prescale = kPWM_Prescale_Divide_2;  break;
-			case 2:this->pwm_cfg.prescale = kPWM_Prescale_Divide_4;  break;
-			case 3:this->pwm_cfg.prescale = kPWM_Prescale_Divide_8;  break;
-			case 4:this->pwm_cfg.prescale = kPWM_Prescale_Divide_16; break;
-			case 5:this->pwm_cfg.prescale = kPWM_Prescale_Divide_32; break;
-			case 6:this->pwm_cfg.prescale = kPWM_Prescale_Divide_64; break;
-			case 7:this->pwm_cfg.prescale = kPWM_Prescale_Divide_128;break;
-		}
-		this->pwm_cfg.reloadLogic     = kPWM_ReloadPwmFullCycle; 
-		if(pair == __PWM_INDEPENDENT__)
-		    this->pwm_cfg.pairOperation   = kPWM_Independent; 
-		else{
-		    NumOfChannel = 2;  
-			if(channel == kPWM_PwmA)
-				this->pwm_cfg.pairOperation = kPWM_ComplementaryPwmA;
-			else
-				this->pwm_cfg.pairOperation = kPWM_ComplementaryPwmB;
-		}
-		this->pwm_cfg.enableDebugMode = false;
-		PWM_Init(this->PWMx,this->pwm_module, &this->pwm_cfg);
-		this->PWMx->SM[this->pwm_module].DISMAP[0]=0;
-
-		duty%=100;
-		this->pwm_param.pwmChannel       = channel;
-		this->pwm_param.level            = kPWM_HighTrue;
-		this->pwm_param.dutyCyclePercent = duty;
-		this->pwm_param.deadtimeValue    = 0U;
-		PWM_SetupPwm(this->PWMx,this->pwm_module,&this->pwm_param,NumOfChannel,kPWM_SignedEdgeAligned,freq_Hz,CLOCK_GetFreq(kCLOCK_IpgClk));
-		PWM_SetPwmLdok(this->PWMx,(int)(1U<<this->pwm_module) , true);
-		PWM_StartTimer(this->PWMx,(int)(1U<<this->pwm_module));
-
-		this->modulo   = this->PWMx->SM[this->pwm_module].VAL1;
-		this->pulseCnt = this->modulo<<1;
-
-		this->setDutyRange(0,100);
-	}
+	PWM(void):min_duty(0),max_duty(100)
+	{}
+	
+	void init( PWM_Type * PWMx                         ,\
+           pwm_submodule_t submodule                   ,\
+           pwm_channels_t  channel                     ,\
+           uint32_t        freq_Hz                     ,\
+           uint8_t         duty   = 0                  ,\
+           PWM_PAIR_t      pair   = __PWM_INDEPENDENT__,\
+           uint8_t    deadTimeVal = 0);
 
 	void duty(uint8_t  value_0_100);
 	void duty(uint32_t value,uint32_t val_max);

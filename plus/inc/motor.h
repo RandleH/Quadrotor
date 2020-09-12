@@ -2,12 +2,41 @@
 #ifndef _MOTOR_H
 #define _MOTOR_H 
 #include "pwm.hpp"
+#include "utility.h"
 #include "mathematic.h"
 
-#define Motor_1 	1
-#define Motor_2 	2
-#define Motor_3 	3
-#define Motor_4 	4
+#define  M1 	0
+#define  M2 	1
+#define  M3 	2
+#define  M4 	3
+
+#define  USE_SPEED_VECTOR
+
+#ifdef   USE_SPEED_VECTOR
+#undef   USE_SPEED_ARRAY
+#else
+#define  USE_SPEED_ARRAY
+#endif
+
+
+#define OE_PIN_PAD_CONFIG_DATA            (SRE_0_SLOW_SLEW_RATE| \
+                                        DSE_6_R0_6| \
+                                        SPEED_2_MEDIUM_100MHz| \
+                                        ODE_0_OPEN_DRAIN_DISABLED| \
+                                        PKE_0_PULL_KEEPER_DISABLED| \
+                                        PUE_0_KEEPER_SELECTED| \
+                                        PUS_0_100K_OHM_PULL_DOWN| \
+                                        HYS_0_HYSTERESIS_DISABLED) 
+
+
+#define MOTOR_OE_GPIO					GPIO1
+#define MOTOR_OE_PIN					(9U)//(4U)
+#define MOTOR_OE_IOMUXC 				IOMUXC_GPIO_AD_B0_09_GPIO1_IO09//IOMUXC_GPIO_AD_B0_04_GPIO1_IO04
+
+
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+  #include "fsl_debug_console.h"
+#endif
 
 
 #if defined USE_C_MODE_INIT
@@ -23,72 +52,26 @@ static void MOTOR_PWM_Init(void);
 
 class PWM_MOTOR{
 public:
-	PWM_MOTOR(void){}
-	PWM_MOTOR(uint8_t min_duty,uint8_t max_duty,uint32_t min_value,uint32_t max_value):
-					speed{0},cnt{0} {
-		this->M[0].init(PWM1,kPWM_Module_0,kPWM_PwmA,__300Hz__,0);
-		this->M[1].init(PWM1,kPWM_Module_0,kPWM_PwmB,__300Hz__,0);
-		this->M[2].init(PWM1,kPWM_Module_1,kPWM_PwmA,__300Hz__,0);
-		this->M[3].init(PWM1,kPWM_Module_1,kPWM_PwmB,__300Hz__,0);
-		assert(min_duty < max_duty);
-		assert(max_duty < 100);
-		assert(this->M[0].PWMx == this->M[1].PWMx);
-		assert(this->M[1].PWMx == this->M[2].PWMx);
-		assert(this->M[2].PWMx == this->M[3].PWMx);
+	PWM_MOTOR(void):max_speedLimit(800),max_accelerLimit(150),speed{0},delta_speed{0}{}
+	void init(uint8_t min_duty,uint8_t max_duty,int32_t min_speed,int32_t max_speed);
 
-		
-		this->PWMx = PWM1;
-		this->pulseCnt  = this->M[0].getPulseCnt();
-		this->modulo    = this->pulseCnt>>1;
-		this->min_duty  = min_duty;
-		this->max_duty  = max_duty;
-		this->max_speed = max_value;
-		this->min_speed = min_value; 
-		this->convertToCntRange();
-		//this->calibrate(this->min_duty,this->max_duty);
-	}
-	void init(uint8_t min_duty,uint8_t max_duty,uint32_t min_value,uint32_t max_value){
-		this->M[0].init(PWM1,kPWM_Module_0,kPWM_PwmA,__300Hz__,0);
-		this->M[1].init(PWM1,kPWM_Module_0,kPWM_PwmB,__300Hz__,0);
-		this->M[2].init(PWM1,kPWM_Module_1,kPWM_PwmA,__300Hz__,0);
-		this->M[3].init(PWM1,kPWM_Module_1,kPWM_PwmB,__300Hz__,0);
-		assert(min_duty < max_duty);
-		assert(max_duty < 100);
-		assert(this->M[0].PWMx == this->M[1].PWMx);
-		assert(this->M[1].PWMx == this->M[2].PWMx);
-		assert(this->M[2].PWMx == this->M[3].PWMx);
-
-		
-		this->PWMx = PWM1;
-		this->pulseCnt  = this->M[0].getPulseCnt();
-		this->modulo    = this->pulseCnt>>1;
-		this->min_duty  = min_duty;
-		this->max_duty  = max_duty;
-		this->max_speed = max_value;
-		this->min_speed = min_value; 
-		this->convertToCntRange();
-	}
-#if defined USE_C_MODE_INIT
-	PWM_MOTOR(uint8_t min_duty,uint8_t max_duty,uint32_t min_value,uint32_t max_value,const char*){
-		assert(min_duty < max_duty);
-		assert(max_duty < 100);
-
-		MOTOR_PWM_Init();
-		this->min_duty = min_duty;
-		this->max_duty = max_duty;
-		this->pulseCnt  = this->M[0].getPulseCnt();
-		this->min_duty  = min_duty;
-		this->max_duty  = max_duty;
-		this->max_speed = max_value;
-		this->min_speed = min_value; 
-		//this->calibrate(this->min_duty,this->max_duty);
-	}
-#endif
+	status_t outputEnable(bool value);
 	status_t calibrate(uint8_t min_duty,uint8_t max_duty);
-	status_t updateSpeed(uint8_t module,uint32_t value,uint32_t val_min,uint32_t val_max);
+	status_t calibrate(void);
+	// status_t updateSpeed(uint8_t module,uint32_t value);
 	status_t updateSpeed(void);
-	void     setSpeedRange(uint32_t min,uint32_t max);
-	uint32_t speed[4];
+	
+
+	uint32_t speedLimit(void);
+	void 	 speedLimit(uint32_t upper_bound);
+
+	int32_t  accelerLimit(void);
+	void 	 accelerLimit(int32_t upper_bound);
+
+	void     kill(void);
+
+	float  	 speed[4];
+	int32_t  delta_speed[4];
 	uint32_t cnt[4];
 private:
 	PWM M[4];
@@ -96,12 +79,19 @@ private:
 	uint8_t  min_duty;
 	uint16_t max_cnt;
 	uint16_t min_cnt;
-	uint32_t max_speed;
+	uint32_t max_speed;	// It is different from "max_speedLimit"
 	uint32_t min_speed;
 	int16_t  modulo;
 	uint16_t pulseCnt;
-	void convertToCntRange(void);
-	inline void convertSpeed(void);
+	uint32_t max_speedLimit;
+	int32_t  max_accelerLimit;	
+	float    internal_speed[4];
+	float    internal_delta_speed[4];	
+	inline   void setSpeedRange(uint32_t min,uint32_t max);
+	void 	 convertToCntRange(void);
+	inline 	 void convertSpeed(void);
+	status_t updateSpeed(const char* opt);// This is a final speed-control function.
+	status_t OE_init(void);
 	PWM_Type* PWMx;
 };
 
