@@ -9,45 +9,38 @@ extern "C" {
 }
 #endif
 
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+  #include "fsl_debug_console.h"
+#endif
+
 AT_NONCACHEABLE_SECTION_ALIGN(pixel_t ov5640_buffer[2][800][480],64);
 
-
-OV5640::OV5640(void):CAMERA(LPI2C1){
-	this->bytesPerPixel = 2;
-	this->param     = ov5640_param_640_480;
-	//this->resource.sccbI2C           = LPI2C1;
+void OV5640::hw_init(void){
+    this->IOMUXC_MUX_Config();
+    this->IOMUXC_PAD_Config();
+    this->RESOURCE_Config(this->LPI2Cx);
+    this->bytesPerPixel = 2;
+    this->param     = ov5640_param_640_480;
+    //this->resource.sccbI2C           = LPI2C1;
     //this->resource.pullResetPin      = OV5640::reset;
     //this->resource.pullPowerDownPin  = OV5640::pwr;
     //this->resource.inputClockFreq_Hz = 24000000;
 
-	this->camera_cfg.pixelFormat   = kVIDEO_PixelFormatRGB565;
-	this->camera_cfg.bytesPerPixel = this->bytesPerPixel;
-	this->camera_cfg.resolution    = FSL_VIDEO_RESOLUTION(this->param.cam_out_width,this->param.cam_out_height);
-	this->camera_cfg.frameBufferLinePitch_Bytes = OV5640_FRAME_WIDTH * this->bytesPerPixel;
-	this->camera_cfg.interface     = kCAMERA_InterfaceGatedClock;
-	this->camera_cfg.controlFlags  = (kCAMERA_HrefActiveLow | kCAMERA_DataLatchOnRisingEdge);
-	this->camera_cfg.framePerSec   = 30;
+    this->camera_cfg.pixelFormat   = kVIDEO_PixelFormatRGB565;
+    this->camera_cfg.bytesPerPixel = this->bytesPerPixel;
+    this->camera_cfg.resolution    = FSL_VIDEO_RESOLUTION(this->param.cam_out_width,this->param.cam_out_height);
+    this->camera_cfg.frameBufferLinePitch_Bytes = OV5640_FRAME_WIDTH * this->bytesPerPixel;
+    this->camera_cfg.interface     = kCAMERA_InterfaceGatedClock;
+    this->camera_cfg.controlFlags  = (kCAMERA_HrefActiveLow | kCAMERA_DataLatchOnRisingEdge);
+    this->camera_cfg.framePerSec   = 30;
     
     this->csi_resource.csiBase = CSI;
-	this->camera_recv_handle.resource    = &this->csi_resource;
-	this->camera_recv_handle.ops         = &csi_ops;//Defination: fsl_csi_camera_adapter.c/.h
-	this->camera_recv_handle.privateData = &this->csi_privateData;//Not Used.
+    this->camera_recv_handle.resource    = &this->csi_resource;
+    this->camera_recv_handle.ops         = &csi_ops;//Defination: fsl_csi_camera_adapter.c/.h
+    this->camera_recv_handle.privateData = &this->csi_privateData;//Not Used.
     CAMERA_RECEIVER_Init(&this->camera_recv_handle,&this->camera_cfg ,NULL ,NULL );
   //CSI_ADAPTER_Init    (&this->camera_recv_handle,&this->camera_cfg ,NULL ,NULL );
-    this->init();
-#if 1
-    memset(ov5640_buffer,0,sizeof(ov5640_buffer));
-    CAMERA_RECEIVER_SubmitEmptyBuffer(&this->camera_recv_handle,(uint32_t)ov5640_buffer[0]);
-  //CSI_ADAPTER_SubmitEmptyBuffer    (&this->camera_recv_handle,(uint32_t)ov5640_buffer[0]);
-    CAMERA_RECEIVER_SubmitEmptyBuffer(&this->camera_recv_handle,(uint32_t)ov5640_buffer[1]);
-  //CSI_ADAPTER_SubmitEmptyBuffer    (&this->camera_recv_handle,(uint32_t)ov5640_buffer[1]);
-#endif
-    CAMERA_RECEIVER_Start(&this->camera_recv_handle);
-  //CSI_ADAPTER_Start    (&this->camera_recv_handle);
-    while (kStatus_Success != CAMERA_RECEIVER_GetFullBuffer(&this->camera_recv_handle, &this->activeFrameAddr));
-  //while (kStatus_Success != CSI_ADAPTER_GetFullBuffer    (&this->camera_recv_handle, &this->activeFrameAddr));
-    while (kStatus_Success != CAMERA_RECEIVER_GetFullBuffer(&this->camera_recv_handle, &this->inactiveFrameAddr));
-  //while (kStatus_Success != CSI_ADAPTER_GetFullBuffer    (&this->camera_recv_handle, &this->inactiveFrameAddr));
+
 }
 
 void OV5640::reset(bool pullUp){
@@ -241,12 +234,15 @@ status_t OV5640::writeFirmWork(uint8_t *pBuffer ,uint16_t BufferSize){
     return SCCB_WriteMultiRegs(this->LPI2Cx, OV5640_SCCB_ADDR, kSCCB_RegAddr16Bit,0x8000,pBuffer,BufferSize);
 }
 
-status_t OV5640::init(void){
+status_t OV5640::init(LPI2C_Type* LPI2Cx){
 	status_t status;
 	if (   (kCAMERA_InterfaceNonGatedClock != this->camera_cfg.interface) 
 		&& (kCAMERA_InterfaceGatedClock    != this->camera_cfg.interface) 
 		&& (kCAMERA_InterfaceCCIR656       != this->camera_cfg.interface))
         return kStatus_InvalidArgument;
+    this->LPI2Cx = LPI2Cx;
+    this->hw_init();
+
     this->pwr(true);
 	this->reset(false);
 	this->delay(1);
@@ -315,6 +311,24 @@ status_t OV5640::init(void){
 
     this->initAutoFocus();
 
+#if 1
+    memset(ov5640_buffer,0,sizeof(ov5640_buffer));
+    CAMERA_RECEIVER_SubmitEmptyBuffer(&this->camera_recv_handle,(uint32_t)ov5640_buffer[0]);
+  //CSI_ADAPTER_SubmitEmptyBuffer    (&this->camera_recv_handle,(uint32_t)ov5640_buffer[0]);
+    CAMERA_RECEIVER_SubmitEmptyBuffer(&this->camera_recv_handle,(uint32_t)ov5640_buffer[1]);
+  //CSI_ADAPTER_SubmitEmptyBuffer    (&this->camera_recv_handle,(uint32_t)ov5640_buffer[1]);
+#endif
+    CAMERA_RECEIVER_Start(&this->camera_recv_handle);
+  //CSI_ADAPTER_Start    (&this->camera_recv_handle);
+    while (kStatus_Success != CAMERA_RECEIVER_GetFullBuffer(&this->camera_recv_handle, &this->activeFrameAddr));
+    //while (kStatus_Success != CSI_ADAPTER_GetFullBuffer    (&this->camera_recv_handle, &this->activeFrameAddr));
+    while (kStatus_Success != CAMERA_RECEIVER_GetFullBuffer(&this->camera_recv_handle, &this->inactiveFrameAddr));
+    //while (kStatus_Success != CSI_ADAPTER_GetFullBuffer    (&this->camera_recv_handle, &this->inactiveFrameAddr));
+    this-> pwr(true);
+
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+        PRINTF("Camera:\tInitialized completedly.\n");
+#endif
 	return kStatus_Success;
 }
 

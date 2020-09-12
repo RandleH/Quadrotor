@@ -1,16 +1,23 @@
 #include "i2c.h"
 
 
+void I2C::init(LPI2C_Type* LPI2Cx, uint8_t hw_Addr ,uint32_t baudRate_Hz){
+	this->LPI2Cx      = LPI2Cx;
+	this->hw_Addr     = hw_Addr;
+	this->baudRate_Hz = baudRate_Hz;
+	this->IOMUXC_MUX_PAD_RESOURCE_Config(NULL);
+}
+
 void I2C::IOMUXC_MUX_PAD_RESOURCE_Config(const lpi2c_master_config_t* p){
 	switch((uint32_t)this->LPI2Cx){
 		case LPI2C1_BASE:		IOMUXC_SetPinMux   (LPI2C1_SCL, 1U);                                   
 								IOMUXC_SetPinMux   (LPI2C1_SDA, 1U);
 								IOMUXC_SetPinConfig(LPI2C1_SCL, I2C_PAD_CONFIG_DATA);                               
 								IOMUXC_SetPinConfig(LPI2C1_SDA, I2C_PAD_CONFIG_DATA);break;
-			case LPI2C2_BASE:	IOMUXC_SetPinMux   (IOMUXC_GPIO_B0_04_LPI2C2_SCL, 1U);                                   
-								IOMUXC_SetPinMux   (IOMUXC_GPIO_B0_05_LPI2C2_SDA, 1U);
-								IOMUXC_SetPinConfig(IOMUXC_GPIO_B0_04_LPI2C2_SCL, I2C_PAD_CONFIG_DATA);                               
-								IOMUXC_SetPinConfig(IOMUXC_GPIO_B0_05_LPI2C2_SDA, I2C_PAD_CONFIG_DATA);break;
+			case LPI2C2_BASE:	IOMUXC_SetPinMux   (LPI2C2_SCL, 1U);                                   
+								IOMUXC_SetPinMux   (LPI2C2_SDA, 1U);
+								IOMUXC_SetPinConfig(LPI2C2_SCL, I2C_PAD_CONFIG_DATA);                               
+								IOMUXC_SetPinConfig(LPI2C2_SDA, I2C_PAD_CONFIG_DATA);break;
 			case LPI2C3_BASE:	IOMUXC_SetPinMux   (LPI2C3_SCL, 1U);                                   
 								IOMUXC_SetPinMux   (LPI2C3_SDA, 1U);
 								IOMUXC_SetPinConfig(LPI2C3_SCL, I2C_PAD_CONFIG_DATA);                               

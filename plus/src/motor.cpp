@@ -1,58 +1,114 @@
 #include "motor.h"
 #include "delay.h"
 
+void PWM_MOTOR::init(uint8_t min_duty,uint8_t max_duty,int32_t min_speed,int32_t max_speed){
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+    PRINTF("Initializing Motor...\n");
+#endif
+    this->M[M1].init(PWM1,kPWM_Module_0,kPWM_PwmA,__300Hz__,0);
+    this->M[M2].init(PWM1,kPWM_Module_0,kPWM_PwmB,__300Hz__,0);
+    this->M[M3].init(PWM1,kPWM_Module_1,kPWM_PwmA,__300Hz__,0);
+    this->M[M4].init(PWM1,kPWM_Module_1,kPWM_PwmB,__300Hz__,0);
+    assert(min_duty < max_duty);
+    assert(max_duty < 100);
+    assert(this->M[0].PWMx == this->M[1].PWMx);
+    assert(this->M[1].PWMx == this->M[2].PWMx);
+    assert(this->M[2].PWMx == this->M[3].PWMx);
+
+    this->OE_init();
+    this->PWMx = PWM1;
+    this->pulseCnt  = this->M[0].getPulseCnt();
+    this->modulo    = this->pulseCnt>>1;
+    this->min_duty  = min_duty;
+    this->max_duty  = max_duty;
+    this->max_speed = max_speed;
+    this->min_speed = min_speed; 
+    this->convertToCntRange();
+
+    this->outputEnable(true);
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+    PRINTF("Maxium Duty = %d%%\n",this->max_duty);
+    PRINTF("Minium Duty = %d%%\n",this->min_duty);
+    PRINTF("Input Value Range:[ %d : %d ]\n",this->min_speed,this->max_speed);
+    PRINTF("Pulse Count = %d\n",0,this->pulseCnt);
+    PRINTF("Count Range :[ %d : %d ]\n",this->min_cnt,this->max_cnt);
+    PRINTF("Calibrating...\n");
+#endif
+
+    this->calibrate();
+}
 
 status_t PWM_MOTOR::calibrate(uint8_t min_duty,uint8_t max_duty){
     DELAY::ms(2000);
-    //LED::RGB_Set(0x04);//R
-    this->M[1-1].duty(max_duty);
-    this->M[2-1].duty(max_duty);
-    this->M[3-1].duty(max_duty);
-    this->M[4-1].duty(max_duty);
-
+    
+    this->speed[0]=this->speed[1]=this->speed[2]=this->speed[3]=this->max_speed;
+    this->updateSpeed("Calibration Process");
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+    PRINTF("Input PWM at Maxium Duty...\n");
+#endif
     DELAY::ms(2000);
     DELAY::ms(2000);
 
-    this->M[1-1].duty(min_duty);
-    this->M[2-1].duty(min_duty);
-    this->M[3-1].duty(min_duty);
-    this->M[4-1].duty(min_duty);
+    this->speed[0]=this->speed[1]=this->speed[2]=this->speed[3]=this->min_speed;
+    this->updateSpeed("Calibration Process");
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+    PRINTF("Input PWM at Minium Duty...\n");
+#endif
     DELAY::ms(2000);
     DELAY::ms(2000);
-
+#ifdef SYSTEM_UART_DEBUG_CONSOLE
+    PRINTF("Calibration completed\n");
+#endif
     return kStatus_Success;
 }
 
-status_t PWM_MOTOR::updateSpeed(uint8_t module_1_to_4,uint32_t value,uint32_t val_min,uint32_t val_max){
-	//assert(0 < module_1_to_4 && module_1_to_4 < 5);
-    //assert(val_min < val_max);
-    //assert(val_min < value && value < val_max);
-
-	this->M[module_1_to_4-1].duty(value,val_min,val_max);
-	return kStatus_Success;
+status_t PWM_MOTOR::outputEnable(bool value){
+    if (value == true)
+        MOTOR_OE_GPIO->DR &= ~(1U << MOTOR_OE_PIN); /* Set pin output to low level.*/
+    else
+        MOTOR_OE_GPIO->DR |= (1U << MOTOR_OE_PIN); /* Set pin output to high level.*/
+    return kStatus_Success; 
 }
 
+
+status_t PWM_MOTOR::calibrate(void){
+    return this->calibrate(this->min_duty,this->max_duty);
+}
+
+#include <cstring>
 status_t PWM_MOTOR::updateSpeed(void){
+    memcpy(internal_speed,speed,4*sizeof(float));
+
+    LIMIT(internal_speed[M1],    0,(float)max_speedLimit);
+    LIMIT(internal_speed[M2],    0,(float)max_speedLimit);
+    LIMIT(internal_speed[M3],    0,(float)max_speedLimit);
+    LIMIT(internal_speed[M4],    0,(float)max_speedLimit);
+
+    updateSpeed("Checked");
+    return kStatus_Success;
+}
+
+status_t PWM_MOTOR::updateSpeed(const char* opt){
     register int16_t modulo = this->modulo;
+    
     this->convertSpeed();
-    this->PWMx->SM[this->M[0].pwm_module].VAL2 = (-modulo);//kPWM_PwmA
-    this->PWMx->SM[this->M[0].pwm_module].VAL3 = (-modulo + this->speed[0]);
+    this->PWMx->SM[this->M[0].pwm_module].VAL2 = (-modulo);//kPWM_PwmA00
+    this->PWMx->SM[this->M[0].pwm_module].VAL3 = (-modulo + this->cnt[0]);
 
-    this->PWMx->SM[this->M[1].pwm_module].VAL4 = (-modulo);//kPWM_PwmB
-    this->PWMx->SM[this->M[1].pwm_module].VAL5 = (-modulo + this->speed[1]);
+    this->PWMx->SM[this->M[1].pwm_module].VAL4 = (-modulo);//kPWM_PwmB00
+    this->PWMx->SM[this->M[1].pwm_module].VAL5 = (-modulo + this->cnt[1]);
 
-    this->PWMx->SM[this->M[2].pwm_module].VAL2 = (-modulo);//kPWM_PwmA
-    this->PWMx->SM[this->M[2].pwm_module].VAL3 = (-modulo + this->speed[2]);
+    this->PWMx->SM[this->M[2].pwm_module].VAL2 = (-modulo);//kPWM_PwmA01
+    this->PWMx->SM[this->M[2].pwm_module].VAL3 = (-modulo + this->cnt[2]);
 
-    this->PWMx->SM[this->M[3].pwm_module].VAL4 = (-modulo);//kPWM_PwmB
-    this->PWMx->SM[this->M[3].pwm_module].VAL5 = (-modulo + this->speed[3]);
+    this->PWMx->SM[this->M[3].pwm_module].VAL4 = (-modulo);//kPWM_PwmB01
+    this->PWMx->SM[this->M[3].pwm_module].VAL5 = (-modulo + this->cnt[3]);
 
     this->PWMx->MCTRL |= PWM_MCTRL_LDOK( (1<<this->M[0].pwm_module)
                                         |(1<<this->M[1].pwm_module)
                                         |(1<<this->M[2].pwm_module)
                                         |(1<<this->M[3].pwm_module));
     return kStatus_Success;
-
 }
 
 void PWM_MOTOR::setSpeedRange(uint32_t min,uint32_t max){
@@ -68,10 +124,61 @@ void PWM_MOTOR::convertToCntRange(void){
 
 void PWM_MOTOR::convertSpeed(void){
     for(uint8_t i=0;i<4;i++){
-        this->speed[i] = map_INTERVAL_UINT(this->speed[i],this->min_speed,this->max_speed,this->min_cnt,this->max_cnt);
+        this->cnt[i] = map_INTERVAL_UINT(   (int32_t)this->internal_speed[i],\
+                                            (int32_t)this->min_speed,\
+                                            (int32_t)this->max_speed,\
+                                            this->min_cnt,\
+                                            this->max_cnt);
     }
 }
 
+status_t PWM_MOTOR::OE_init(void){
+    IOMUXC_SetPinMux   (MOTOR_OE_IOMUXC, 0U); 
+    IOMUXC_SetPinConfig(MOTOR_OE_IOMUXC, PWM_PAD_CONFIG_DATA);
+
+    gpio_pin_config_t io_config;
+    io_config.direction     = kGPIO_DigitalOutput;
+    io_config.interruptMode = kGPIO_NoIntmode;
+    io_config.outputLogic   = 1;
+    GPIO_PinInit(MOTOR_OE_GPIO, MOTOR_OE_PIN, &io_config);
+    return kStatus_Success;
+}
+
+uint32_t PWM_MOTOR::speedLimit(void){
+    return this->max_speedLimit;
+}
+
+void PWM_MOTOR::speedLimit(uint32_t value){
+    LIMIT(value,0,this->max_speed); 
+    this->max_speedLimit = value;
+}
+
+
+int32_t PWM_MOTOR::accelerLimit(void){
+    return this->max_accelerLimit;
+}
+
+void PWM_MOTOR::accelerLimit(int32_t delta){
+    LIMIT(delta,0,this->max_speed);
+    this->max_accelerLimit = delta;
+}
+
+// This is a block function. Once enter, dead loop.
+void PWM_MOTOR::kill(void){
+    uint16_t cnt = (uint16_t)speed[0];
+    cnt/=100;
+    cnt*=100;
+    while(cnt-=100){
+        speed[0] = \
+        speed[1] = \
+        speed[2] = \
+        speed[3] = (float)cnt;
+        updateSpeed(" Skip the Limit ");
+        DELAY::ms(100);
+    }
+    outputEnable(false);
+    while(1);
+}
 
 #if defined USE_C_MODE_INIT
 
