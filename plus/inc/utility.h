@@ -25,6 +25,14 @@
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
 #endif
 
+#define ACCORDING_TO
+
+#define SWITCH_ON	
+
+#define BASE_ON
+
+
+
 //@}
 
 

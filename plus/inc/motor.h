@@ -33,6 +33,11 @@
 #define MOTOR_OE_PIN					(9U)//(4U)
 #define MOTOR_OE_IOMUXC 				IOMUXC_GPIO_AD_B0_09_GPIO1_IO09//IOMUXC_GPIO_AD_B0_04_GPIO1_IO04
 
+#define MAX_SAFETY_SPEED_OF_MOTOR              (2048U)
+#define MIN_RUNING_SPEED_OF_MOTOR              (500U) //
+
+#define MIN_SPEED_OF_MOTOR                     (0U)
+#define MAX_SPEED_OF_MOTOR                     (4096U)
 
 #ifdef SYSTEM_UART_DEBUG_CONSOLE
   #include "fsl_debug_console.h"
@@ -58,10 +63,9 @@ public:
 	status_t outputEnable(bool value);
 	status_t calibrate(uint8_t min_duty,uint8_t max_duty);
 	status_t calibrate(void);
-	// status_t updateSpeed(uint8_t module,uint32_t value);
 	status_t updateSpeed(void);
+	status_t resetSpeed(uint16_t value);
 	
-
 	uint32_t speedLimit(void);
 	void 	 speedLimit(uint32_t upper_bound);
 

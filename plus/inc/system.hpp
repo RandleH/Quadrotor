@@ -13,7 +13,7 @@
 #include "led.h"
 #include "os.hpp"
 #include "pid.h"
-
+#include "logger.h"
 #include <stack>
 using namespace std;
 
@@ -60,6 +60,7 @@ public:
 	static OV5640       	camera;
 	static OperatingSystem 	OS;
 	static PID_Module		PID;
+	static DataLogger       Log;
 
 	static void init(void);
 	static void setStatus(SystemStatus_t new_status);
@@ -81,7 +82,7 @@ public:
 	static bool   enablePIDFlag;
 	static bool   enableLEDFlag;
 	static bool   enableCameraFlag;
-	static bool   enableMotorFlag[4];
+	static bool   enableMotorFlag;
 	
 	static void updateGyroData(void* param);
 	static void showLEDStatus(void* param);

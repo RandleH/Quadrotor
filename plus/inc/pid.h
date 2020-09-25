@@ -86,7 +86,7 @@ public:
 	void  init(void);
 	void  apply(float input , vector<float>& outputBuffer);//指定一个输出buffer，并将结果存储于此。
 	void  apply(float input);//默认为内部buffer，并将结果存储于此。
-	
+	bool outputSpeedFlags[4];//电机输出许可（0=计算但不加载到PID总输出；1=计算并加载到PID总输出）
 protected:
 	vector<float>& data;//数据源。
 	vector<float>  errVal;//经计算后，记录误差数据。
@@ -193,7 +193,6 @@ public:
 	static bool outputPitchFlag;
 	static bool outputRollFlag;
 	static bool outputYawFlag;
-	static bool outputSpeedFlags[4];
 private:
 	static vector<float> pitchAngle;
 	static vector<float> rollAngle;
@@ -218,9 +217,7 @@ public:
   	static const float INFINITE;
 
   	bool   resetSpeedFlag;
-  	bool   incPIDFlag;
-  	bool   posPIDFlag;
-
+  	static bool   outputSpeedFlags[4];
   	float  averageSpeed;
  private:
  	inline void resetIncData(int value);
