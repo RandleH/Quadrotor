@@ -1,52 +1,58 @@
 # Quadrotor
+
+<p align="center">
+<img src="./Img/profile.png" width="300" height="300" border="5">
+ </p>
+
+This project aims to provide a reliable solution for quadrotor OS. In this repository, it includes scheme sheets, code, IO pins addtribution. I migrated some of BSP driver program using a C++ structure and it is completely hardware independent.
+
+- **Hardware**
+
+  `NXP iMX.RT1052(Cortex M7)` | `MPU6050` | `OV5640` | `HobbyWing` | `BMP180` | `AP6181(WiFi)`
+
+
+
+- **Software**
+
+  `freeRTOS` | `ARM GCC`
+
+
+
+ 
+
 ## File Structure
 
-This project contains a numble of libraries for hardware drivers and auxiliary debug applications.
+| Directory                | Description                                                  |
+| ------------------------ | ------------------------------------------------------------ |
+| [libraries](./libraries) | [read more]() - Support package for `cortex M7`              |
+| [plus](./plus)           | [read more]() - System interconnection layer and attitude control algorithm |
+| [mpu6050](./MPU6050_DMP) | [read more]() - Firmware for  triple-axis MEMS gyroscope     |
+| [freeRTOS](./FreeRTOS)   | [read more]() - Core embedded operating system               |
 
 
-All of the source code files are listed as below. 
 
-![file img]()
+## Why Cortex M7
 
-## Repositary Structure
+The i.MX RT1050 is the industry's first crossover MCU and combines the high-performance and high level of integration on an applications processors with the ease of use and real-time functionality of a microcontroller. The i.MX RT1050 runs on the Arm® Cortex®-M7 core at 600 MHz.
 
-This structure suggests a best arrangement to include files into project IDE. 
+> + 3020 CoreMark/1284 DMIPS @ 600 MHz 
+> + Up to 512 kB Tightly Coupled Memory (TCM)
+> + FreeRTOS support available with MCUXpresso SDK
+> + Real-time, low-latency response as low as 20 ns
+> + Industry’s lowest dynamic power with an integrated DC-DC converter
+> + Low-power run modes at 24 MHz
+> + Parallel camera sensor interface
+> + LCD display controller (up to WXGA 1366x768)
+> + 3x I2S for high-performance, multichannel audio
+> + Extensive external memory interface options
+> + NAND, eMMC, QuadSPI NOR Flash, and Parallel NOR Flash
+> + Wireless connectivity interface for Wi-Fi®, Bluetooth®, Bluetooth Low Energy, ZigBee® and Thread™
 
-![repos img]()
-
-## Hardware
-
-### Schematic Chart
 
 
-![Sheet1 img]()
-![Sheet2 img]()
-![Sheet3 img]()
 
-### PCB Board
 
-![PCB_f img]()
-![PCB_b img]()
 
-### NXP i.MX.RT1052 
-
->The i.MX RT1050 is the industry's first crossover MCU and combines the high-performance and high level of integration on an applications processors with the ease of use and real-time functionality of a microcontroller. The i.MX RT1050 runs on the Arm® Cortex®-M7 core at 600 MHz.
->+ Highest performing Cortex-M7 
->+ 3020 CoreMark/1284 DMIPS @ 600 MHz 
->+ Up to 512 kB Tightly Coupled Memory (TCM)
->+ FreeRTOS support available with MCUXpresso SDK
->+ Real-time, low-latency response as low as 20 ns
->+ Industry’s lowest dynamic power with an integrated DC-DC converter
->+ Low-power run modes at 24 MHz
->+ Advanced multimedia for GUI and enhanced HMI
->+ 2D graphics acceleration engine
->+ Parallel camera sensor interface
->+ LCD display controller (up to WXGA 1366x768)
->+ 3x I2S for high-performance, multichannel audio
->+ Extensive external memory interface options
->+ NAND, eMMC, QuadSPI NOR Flash, and Parallel NOR Flash
->+ Wireless connectivity interface for Wi-Fi®, Bluetooth®, Bluetooth Low Energy, ZigBee® and Thread™
->+ Supported by MCUXpresso SDK, IDE and Config Tools
 
 ### MPU6050
 The triple-axis MEMS gyroscope in the MPU-60X0 includes a wide range of features:
@@ -75,11 +81,7 @@ Accelerometer Features:
 
 ### OV5640
 
-### HOBBYWING
-
-### SUNNYSKY
-
-## Current Status
+## 
 
 
 
