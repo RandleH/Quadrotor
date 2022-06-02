@@ -1,4 +1,4 @@
-# Quadrotor
+# Quadrotor | QuadOS
 
 <p align="center">
 <img src="./Img/profile.png" width="300" height="300" border="5">
